@@ -31,14 +31,6 @@ References:
   - https://en.wikipedia.org/wiki/Red–black_tree
   - https://en.wikipedia.org/wiki/Treap
 - GeeksforGeeks articles on BST balancing.
-
-Running Instructions:
-    python main.py
-OR  python main.py --export-dataset
-
-The latter will export the generated dataset to 'my_dataset.txt' so you can 
-upload it to a repository or file-sharing service. Then you can provide that link
-in your PDF as required by your assignment.
 """
 
 import time
