@@ -1,18 +1,31 @@
 """
-main.py
+Time Complexity Overview:
+-------------------------
+1. AVL Tree
+   - Insertion: O(log n)
+   - Search:    O(log n)
+   - Deletion:  O(log n)
+   - Space:     O(n)
 
-Compare insertion, search, and deletion times for AVL, Red-Black, and Treap.
-Allows scaling up (e.g., 100k, 500k, 1M).
-Generates random data to avoid near-ideal collisions or easy patterns.
+2. Red-Black Tree
+   - Insertion: O(log n)
+   - Search:    O(log n)
+   - Deletion:  O(log n)
+   - Space:     O(n)
 
-Also creates plots for insertion, search, and deletion times using matplotlib,
-so you can include them in your report.
+3. Treap
+   - Insertion: Average O(log n), Worst O(n)
+   - Search:    Average O(log n), Worst O(n)
+   - Deletion:  Average O(log n), Worst O(n)
+   - Space:     O(n)
 
-Running Instructions:
-    python main.py
-
-Ensure you have matplotlib installed:
-    pip install matplotlib
+References:
+-----------
+1) Wikipedia: 
+   - https://en.wikipedia.org/wiki/AVL_tree
+   - https://en.wikipedia.org/wiki/Red–black_tree
+   - https://en.wikipedia.org/wiki/Treap
+2) GeeksforGeeks articles on BST and self-balancing trees
 """
 
 import time
@@ -64,9 +77,6 @@ def benchmark_deletion(tree_class, data, del_keys):
     """
     Creates a new 'tree_class' instance, inserts 'data', then deletes each item in 'del_keys'.
     Returns the total time in seconds to perform all deletions.
-
-    Note: If 'del_keys' contains elements not in 'data', the tree's delete method
-    should simply handle them gracefully (often no-op).
     """
     tree = tree_class()
     for val in data:
@@ -78,7 +88,13 @@ def benchmark_deletion(tree_class, data, del_keys):
     return end - start
 
 def main():
-    # You can adjust these sizes for your scaling tests
+    """
+    Main entry point:
+    1) Adjust 'sizes' if you want different scaling.
+    2) Generates random data for each size.
+    3) Benchmarks insertion, search, and deletion.
+    4) Saves three line-plot PNGs: insertion_times.png, search_times.png, deletion_times.png.
+    """
     sizes = [100000, 500000, 1000000]
 
     # We'll store all results for plotting
@@ -86,32 +102,28 @@ def main():
     avl_search_times, rb_search_times, treap_search_times = [], [], []
     avl_delete_times, rb_delete_times, treap_delete_times = [], [], []
 
-    # For curiosity: track how many keys are actually found by each DS in search
-    avl_found_counts, rb_found_counts, treap_found_counts = [], [], []
-
+    # Loop over each size
     for s in sizes:
         print(f"\n=== Data size: {s} ===")
 
-        # 1) Generate main data
+        # Generate main data
         data = generate_random_data(n=s, seed=123)
 
-        # 2) Prepare queries for searching:
-        #    half from 'data' (expected found), half random new (expected not found)
-        query_count = min(20000, s)  # or any fraction
+        # Prepare queries (half existing, half random)
+        query_count = min(20000, s)
         existing_part = random.sample(data, query_count // 2)
         new_part = generate_random_data(n=query_count // 2, seed=999)
         queries = existing_part + new_part
         random.shuffle(queries)
 
-        # 3) Prepare deletion list: let's delete half of the data (existing) and half random new
-        #    You can tweak the fraction as you like
+        # Prepare deletion keys (also half existing, half random)
         delete_count = min(20000, s)
         existing_del_part = random.sample(data, delete_count // 2)
         new_del_part = generate_random_data(n=delete_count // 2, seed=1234)
         del_keys = existing_del_part + new_del_part
         random.shuffle(del_keys)
 
-        # ----------- Insertion -----------
+        # -------- Insertion --------
         avl_insert_time = benchmark_insertion(AVLTree, data)
         rb_insert_time = benchmark_insertion(RBTree, data)
         treap_insert_time = benchmark_insertion(Treap, data)
@@ -121,7 +133,7 @@ def main():
         print(f"RB:    {rb_insert_time:.4f}s")
         print(f"Treap: {treap_insert_time:.4f}s")
 
-        # ----------- Search -----------
+        # -------- Search --------
         avl_search_time, avl_found = benchmark_search(AVLTree, data, queries)
         rb_search_time, rb_found = benchmark_search(RBTree, data, queries)
         treap_search_time, treap_found = benchmark_search(Treap, data, queries)
@@ -131,7 +143,7 @@ def main():
         print(f"RB:    {rb_search_time:.4f}s, Found {rb_found}/{len(queries)}")
         print(f"Treap: {treap_search_time:.4f}s, Found {treap_found}/{len(queries)}")
 
-        # ----------- Deletion -----------
+        # -------- Deletion --------
         avl_delete_time = benchmark_deletion(AVLTree, data, del_keys)
         rb_delete_time = benchmark_deletion(RBTree, data, del_keys)
         treap_delete_time = benchmark_deletion(Treap, data, del_keys)
@@ -141,7 +153,7 @@ def main():
         print(f"RB:    {rb_delete_time:.4f}s")
         print(f"Treap: {treap_delete_time:.4f}s")
 
-        # Store results
+        # Store for plotting
         avl_insert_times.append(avl_insert_time)
         rb_insert_times.append(rb_insert_time)
         treap_insert_times.append(treap_insert_time)
@@ -154,14 +166,7 @@ def main():
         rb_delete_times.append(rb_delete_time)
         treap_delete_times.append(treap_delete_time)
 
-        avl_found_counts.append(avl_found)
-        rb_found_counts.append(rb_found)
-        treap_found_counts.append(treap_found)
-
-    # ================= PLOTTING =================
-    # We'll create three separate line plots: Insertion, Search, Deletion
-
-    # 1) Insertion Time Plot
+    # ====== Plot: Insertion ======
     plt.figure()
     plt.plot(sizes, avl_insert_times, label="AVL Insert")
     plt.plot(sizes, rb_insert_times, label="RB Insert")
@@ -171,9 +176,8 @@ def main():
     plt.title("Insertion Time Comparison")
     plt.legend()
     plt.savefig("insertion_times.png")
-    # plt.show()  # uncomment to display
 
-    # 2) Search Time Plot
+    # ====== Plot: Search ======
     plt.figure()
     plt.plot(sizes, avl_search_times, label="AVL Search")
     plt.plot(sizes, rb_search_times, label="RB Search")
@@ -183,9 +187,8 @@ def main():
     plt.title("Search Time Comparison")
     plt.legend()
     plt.savefig("search_times.png")
-    # plt.show()
 
-    # 3) Deletion Time Plot
+    # ====== Plot: Deletion ======
     plt.figure()
     plt.plot(sizes, avl_delete_times, label="AVL Delete")
     plt.plot(sizes, rb_delete_times, label="RB Delete")
@@ -195,7 +198,6 @@ def main():
     plt.title("Deletion Time Comparison")
     plt.legend()
     plt.savefig("deletion_times.png")
-    # plt.show()
 
     print("\nPlots saved as 'insertion_times.png', 'search_times.png', and 'deletion_times.png'.")
 

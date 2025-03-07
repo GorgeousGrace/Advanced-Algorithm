@@ -134,12 +134,7 @@ class Treap:
 
     def _left_rotate(self, x):
         """
-        Left-rotate around node x:
-         x                   y
-          \                 / \
-           y      -->      x   ...
-          /
-        ...
+        Left-rotate around node x
         """
         y = x.right
         x.right = y.left
@@ -148,12 +143,7 @@ class Treap:
 
     def _right_rotate(self, x):
         """
-        Right-rotate around node x:
-            x            y
-           /            / \
-          y      -->  ...  x
-           \
-           ...
+        Right-rotate around node x
         """
         y = x.left
         x.left = y.right
