@@ -1,4 +1,9 @@
 """
+Compare insertion, search, and deletion times for three data structures:
+ - AVL Tree
+ - Red-Black Tree
+ - Treap
+
 Time Complexity Overview:
 -------------------------
 1. AVL Tree
@@ -21,11 +26,19 @@ Time Complexity Overview:
 
 References:
 -----------
-1) Wikipedia: 
-   - https://en.wikipedia.org/wiki/AVL_tree
-   - https://en.wikipedia.org/wiki/Red–black_tree
-   - https://en.wikipedia.org/wiki/Treap
-2) GeeksforGeeks articles on BST and self-balancing trees
+- Wikipedia: 
+  - https://en.wikipedia.org/wiki/AVL_tree
+  - https://en.wikipedia.org/wiki/Red–black_tree
+  - https://en.wikipedia.org/wiki/Treap
+- GeeksforGeeks articles on BST balancing.
+
+Running Instructions:
+    python main.py
+OR  python main.py --export-dataset
+
+The latter will export the generated dataset to 'my_dataset.txt' so you can 
+upload it to a repository or file-sharing service. Then you can provide that link
+in your PDF as required by your assignment.
 """
 
 import time
@@ -40,10 +53,20 @@ from Treap import Treap
 def generate_random_data(n=100000, seed=42):
     """
     Generates 'n' random integers in [0, 10^9], using 'seed' for reproducibility.
-    This avoids purely sequential data, giving a more realistic distribution.
     """
     random.seed(seed)
     return [random.randint(0, 10**9) for _ in range(n)]
+
+def export_dataset(n=100000, seed=42, filename="my_dataset.txt"):
+    """
+    Generates 'n' random data points and saves them to 'filename', 
+    one value per line.
+    """
+    data = generate_random_data(n, seed)
+    with open(filename, "w") as f:
+        for val in data:
+            f.write(str(val) + "\n")
+    print(f"Dataset of size {n} exported to '{filename}'.")
 
 def benchmark_insertion(tree_class, data):
     """
@@ -89,41 +112,40 @@ def benchmark_deletion(tree_class, data, del_keys):
 
 def main():
     """
-    Main entry point:
-    1) Adjust 'sizes' if you want different scaling.
-    2) Generates random data for each size.
-    3) Benchmarks insertion, search, and deletion.
-    4) Saves three line-plot PNGs: insertion_times.png, search_times.png, deletion_times.png.
+    Benchmarks insertion, search, and deletion for AVL, Red-Black, and Treap.
+    Generates line plots for each operation. 
+    If '--export-dataset' is passed, it instead exports a dataset and exits.
     """
+    if "--export-dataset" in sys.argv:
+        export_dataset(n=1000000, seed=123, filename="my_dataset.txt")
+        return  # Exit after exporting
+
+    # Default sizes for benchmarking
     sizes = [100000, 500000, 1000000]
 
-    # We'll store all results for plotting
     avl_insert_times, rb_insert_times, treap_insert_times = [], [], []
     avl_search_times, rb_search_times, treap_search_times = [], [], []
     avl_delete_times, rb_delete_times, treap_delete_times = [], [], []
 
-    # Loop over each size
     for s in sizes:
         print(f"\n=== Data size: {s} ===")
-
-        # Generate main data
         data = generate_random_data(n=s, seed=123)
 
-        # Prepare queries (half existing, half random)
+        # Prepare queries (search)
         query_count = min(20000, s)
         existing_part = random.sample(data, query_count // 2)
         new_part = generate_random_data(n=query_count // 2, seed=999)
         queries = existing_part + new_part
         random.shuffle(queries)
 
-        # Prepare deletion keys (also half existing, half random)
+        # Prepare keys (deletion)
         delete_count = min(20000, s)
         existing_del_part = random.sample(data, delete_count // 2)
         new_del_part = generate_random_data(n=delete_count // 2, seed=1234)
         del_keys = existing_del_part + new_del_part
         random.shuffle(del_keys)
 
-        # -------- Insertion --------
+        # Insertion
         avl_insert_time = benchmark_insertion(AVLTree, data)
         rb_insert_time = benchmark_insertion(RBTree, data)
         treap_insert_time = benchmark_insertion(Treap, data)
@@ -133,7 +155,7 @@ def main():
         print(f"RB:    {rb_insert_time:.4f}s")
         print(f"Treap: {treap_insert_time:.4f}s")
 
-        # -------- Search --------
+        # Search
         avl_search_time, avl_found = benchmark_search(AVLTree, data, queries)
         rb_search_time, rb_found = benchmark_search(RBTree, data, queries)
         treap_search_time, treap_found = benchmark_search(Treap, data, queries)
@@ -143,7 +165,7 @@ def main():
         print(f"RB:    {rb_search_time:.4f}s, Found {rb_found}/{len(queries)}")
         print(f"Treap: {treap_search_time:.4f}s, Found {treap_found}/{len(queries)}")
 
-        # -------- Deletion --------
+        # Deletion
         avl_delete_time = benchmark_deletion(AVLTree, data, del_keys)
         rb_delete_time = benchmark_deletion(RBTree, data, del_keys)
         treap_delete_time = benchmark_deletion(Treap, data, del_keys)
@@ -153,7 +175,7 @@ def main():
         print(f"RB:    {rb_delete_time:.4f}s")
         print(f"Treap: {treap_delete_time:.4f}s")
 
-        # Store for plotting
+        # Store times
         avl_insert_times.append(avl_insert_time)
         rb_insert_times.append(rb_insert_time)
         treap_insert_times.append(treap_insert_time)
@@ -166,7 +188,7 @@ def main():
         rb_delete_times.append(rb_delete_time)
         treap_delete_times.append(treap_delete_time)
 
-    # ====== Plot: Insertion ======
+    # Plot: Insertion
     plt.figure()
     plt.plot(sizes, avl_insert_times, label="AVL Insert")
     plt.plot(sizes, rb_insert_times, label="RB Insert")
@@ -177,7 +199,7 @@ def main():
     plt.legend()
     plt.savefig("insertion_times.png")
 
-    # ====== Plot: Search ======
+    # Plot: Search
     plt.figure()
     plt.plot(sizes, avl_search_times, label="AVL Search")
     plt.plot(sizes, rb_search_times, label="RB Search")
@@ -188,7 +210,7 @@ def main():
     plt.legend()
     plt.savefig("search_times.png")
 
-    # ====== Plot: Deletion ======
+    # Plot: Deletion
     plt.figure()
     plt.plot(sizes, avl_delete_times, label="AVL Delete")
     plt.plot(sizes, rb_delete_times, label="RB Delete")
@@ -200,6 +222,7 @@ def main():
     plt.savefig("deletion_times.png")
 
     print("\nPlots saved as 'insertion_times.png', 'search_times.png', and 'deletion_times.png'.")
+
 
 if __name__ == "__main__":
     main()
